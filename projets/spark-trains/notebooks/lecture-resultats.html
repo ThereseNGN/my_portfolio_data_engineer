@@ -1,0 +1,703 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Spark Trains — Rendu du TP</title><style>body{font:16px/1.6 system-ui,sans-serif;color:#202c36;background:#f7f9fb;max-width:1100px;margin:auto;padding:30px}h1{font-size:30px}h2{font-size:21px}section{background:white;border:1px solid #d9e1e7;border-radius:8px;padding:22px;margin:20px 0}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;background:#f3f6f8;padding:14px}table{font-size:12px;border-collapse:collapse;width:100%;table-layout:fixed}th,td{padding:7px;border:1px solid #d9e1e7;overflow-wrap:anywhere}th{background:#e7eff4}summary{cursor:pointer;color:#176b87}a{color:#176b87}</style></head><body><h1>Analyse ferroviaire avec Spark</h1><p>Code et résultats du rendu Databricks d’origine, reconstruits depuis l’export HTML. Aucune réexécution. Les coquilles d’origine sont conservées ici ; voir la version portfolio et son journal d’adaptations.</p><p>21 exercices · 7 200 trajets · PySpark et Spark SQL</p><section><h2>Exercice 1</h2><details><summary>Voir le code</summary><pre><code>##  PARTIE A  ##
+# Exercice 1 - Chargement
+trains = spark.read.csv (&quot;/Volumes/workspace/default/tptrains/trains.csv&quot;, header=True, inferSchema=True)
+# Afficher les 10 premières lignes
+print(&quot;10 premières lignes :&quot;)
+trains.limit(10).show()
+# Afficher le schéma
+print(&quot;Schéma du DataFrame:&quot;)
+trains.printSchema()
+# Afficher le nombre total de trajets
+print(f&quot;Nombre total de trajets : {trains.count()}&quot;)</code></pre></details><pre>10 premières lignes :
++-------+----------+-----------------+---------------+-----------+----------+-----------+------------+----------+---------+---------+
+|trip_id|      date|departure_station|arrival_station|    company|train_type|distance_km|duration_min|passengers|delay_min|cancelled|
++-------+----------+-----------------+---------------+-----------+----------+-----------+------------+----------+---------+---------+
+|  10001|2026-11-04|            Paris|           Lyon|       SNCF|       TGV|        423|         153|       272|       30|       No|
+|  10002|2026-08-14|            Paris|      Marseille|       SNCF|       TGV|        668|         241|       471|       25|       No|
+|  10003|2026-09-09|            Paris|          Lille|       SNCF|Intercités|        185|         110|       350|        5|       No|
+|  10004|2026-09-20|            Paris|       Bordeaux|       SNCF|Intercités|        515|         316|       302|       27|       No|
+|  10005|2026-06-08|            Paris|       Toulouse|RailExpress|       TGV|        591|         200|       367|       15|       No|
+|  10006|2026-09-13|            Paris|         Nantes|RailExpress|       TGV|        405|         134|       424|       24|       No|
+|  10007|2026-05-13|            Paris|     Strasbourg|       SNCF|Intercités|        450|         270|       371|        4|       No|
+|  10008|2026-01-26|            Paris|         Rennes|       SNCF|Intercités|        380|         212|       132|        8|       No|
+|  10009|2026-04-28|            Paris|    Montpellier|       SNCF|       TER|        610|         510|       169|       13|       No|
+|  10010|2026-12-09|             Lyon|          Paris|       SNCF|Intercités|        423|         244|       399|        3|       No|
++-------+----------+-----------------+---------------+-----------+----------+-----------+------------+----------+---------+---------+
+
+Schéma du DataFrame:
+root
+ |-- trip_id: integer (nullable = true)
+ |-- date: date (nullable = true)
+ |-- departure_station: string (nullable = true)
+ |-- arrival_station: string (nullable = true)
+ |-- company: string (nullable = true)
+ |-- train_type: string (nullable = true)
+ |-- distance_km: integer (nullable = true)
+ |-- duration_min: integer (nullable = true)
+ |-- passengers: integer (nullable = true)
+ |-- delay_min: integer (nullable = true)
+ |-- cancelled: string (nullable = true)
+
+Nombre total de trajets : 7200
+</pre></section><section><h2>Exercice 2</h2><details><summary>Voir le code</summary><pre><code># Exercice 2 - Sélection
+# Afficher uniquement les colonnes departure_station/arrival_station/distance_km/duration_min/delay_min
+# Afficher les 20 premières lignes du résultat
+print(&quot;20 premières lignes de la sélection :&quot;)
+trains.select(&quot;departure_station&quot;, &quot;arrival_station&quot;, &quot;distance_km&quot;, &quot;duration_min&quot;, &quot;delay_min&quot;).limit(20).show()
+</code></pre></details><pre>20 premières lignes de la sélection :
++-----------------+---------------+-----------+------------+---------+
+|departure_station|arrival_station|distance_km|duration_min|delay_min|
++-----------------+---------------+-----------+------------+---------+
+|            Paris|           Lyon|        423|         153|       30|
+|            Paris|      Marseille|        668|         241|       25|
+|            Paris|          Lille|        185|         110|        5|
+|            Paris|       Bordeaux|        515|         316|       27|
+|            Paris|       Toulouse|        591|         200|       15|
+|            Paris|         Nantes|        405|         134|       24|
+|            Paris|     Strasbourg|        450|         270|        4|
+|            Paris|         Rennes|        380|         212|        8|
+|            Paris|    Montpellier|        610|         510|       13|
+|             Lyon|          Paris|        423|         244|        3|
+|             Lyon|      Marseille|        323|         269|       22|
+|             Lyon|          Lille|        524|           0|        0|
+|             Lyon|       Bordeaux|        644|         391|       47|
+|             Lyon|       Toulouse|        524|         188|        6|
+|             Lyon|         Nantes|        654|         229|        1|
+|             Lyon|     Strasbourg|        405|         214|        1|
+|             Lyon|         Rennes|        695|         231|       36|
+|             Lyon|    Montpellier|        323|         272|       11|
+|        Marseille|          Paris|        668|         245|        8|
+|        Marseille|           Lyon|        323|         180|        1|
++-----------------+---------------+-----------+------------+---------+
+
+</pre></section><section><h2>Exercice 3</h2><details><summary>Voir le code</summary><pre><code># Exercice 3 - Valeurs distinctes
+print(&quot;---Gares de départ---&quot;)
+trains.select(&quot;departure_station&quot;).distinct().orderBy(&quot;departure_station&quot;).show()
+print(&quot;---Compagnies---&quot;)
+trains.select(&quot;company&quot;).distinct().orderBy(&quot;company&quot;).show()
+print(&quot;---Types de trains---&quot;)
+trains.select(&quot;train_type&quot;).distinct().orderBy(&quot;train_type&quot;).show()</code></pre></details><pre>---Gares de départ---
++-----------------+
+|departure_station|
++-----------------+
+|         Bordeaux|
+|            Lille|
+|             Lyon|
+|        Marseille|
+|      Montpellier|
+|           Nantes|
+|            Paris|
+|           Rennes|
+|       Strasbourg|
+|         Toulouse|
++-----------------+
+
+---Compagnies---
++-----------+
+|    company|
++-----------+
+|   HexaRail|
+|RailExpress|
+|       SNCF|
++-----------+
+
+---Types de trains---
++----------+
+|train_type|
++----------+
+|Intercités|
+|       TER|
+|       TGV|
++----------+
+
+</pre></section><section><h2>Exercice 4</h2><details><summary>Voir le code</summary><pre><code># Exercice 4 - Filtrage
+# Afficher uniquement les colonnes trip_id / departure_station / arrival_station / train_type / distance_km
+# Filtre sur les trajets départ Paris, distance &gt; 300km, train non annulé
+print(&quot;Filtre sur les trajets départ Paris, distance &gt; 300km, train non annulé : &quot;)
+trains.select(
+    &quot;trip_id&quot;,
+    &quot;departure_station&quot;,
+    &quot;arrival_station&quot;, &quot;train_type&quot;,
+    &quot;distance_km&quot;
+    ).filter(
+        (trains.departure_station == &quot;Paris&quot;) &amp;
+        (trains.distance_km &gt; 300) &amp;
+        (trains.cancelled == &quot;No&quot;)
+    ).show()
+</code></pre></details><pre>Filtre sur les trajets départ Paris, distance &gt; 300km, train non annulé : 
++-------+-----------------+---------------+----------+-----------+
+|trip_id|departure_station|arrival_station|train_type|distance_km|
++-------+-----------------+---------------+----------+-----------+
+|  10001|            Paris|           Lyon|       TGV|        423|
+|  10002|            Paris|      Marseille|       TGV|        668|
+|  10004|            Paris|       Bordeaux|Intercités|        515|
+|  10005|            Paris|       Toulouse|       TGV|        591|
+|  10006|            Paris|         Nantes|       TGV|        405|
+|  10007|            Paris|     Strasbourg|Intercités|        450|
+|  10008|            Paris|         Rennes|Intercités|        380|
+|  10009|            Paris|    Montpellier|       TER|        610|
+|  10091|            Paris|           Lyon|       TGV|        423|
+|  10092|            Paris|      Marseille|       TGV|        668|
+|  10094|            Paris|       Bordeaux|       TGV|        515|
+|  10095|            Paris|       Toulouse|Intercités|        591|
+|  10096|            Paris|         Nantes|Intercités|        405|
+|  10097|            Paris|     Strasbourg|       TGV|        450|
+|  10098|            Paris|         Rennes|       TGV|        380|
+|  10099|            Paris|    Montpellier|       TGV|        610|
+|  10181|            Paris|           Lyon|Intercités|        423|
+|  10182|            Paris|      Marseille|       TGV|        668|
+|  10184|            Paris|       Bordeaux|Intercités|        515|
+|  10185|            Paris|       Toulouse|Intercités|        591|
++-------+-----------------+---------------+----------+-----------+
+only showing top 20 rows
+</pre></section><section><h2>Exercice 5</h2><details><summary>Voir le code</summary><pre><code>##  PARTIE B  ##
+# Création de la vue temporaire SQL
+trains.createOrReplaceTempView(&quot;trains&quot;)
+# Exercice 5 - Statistiques générales
+print(&quot;Statistiques générales : &quot;)
+spark.sql(&quot;&quot;&quot;
+    SELECT
+        MIN(distance_km) AS minDistance,
+        MAX(distance_km) AS maxDistance,
+        ROUND(AVG(distance_km), 2) AS avgDistance,
+        ROUND(AVG(duration_min), 2) AS avgDuration,
+        ROUND(AVG(delay_min), 2) AS avgDelay
+    FROM trains
+    WHERE cancelled = &#x27;No&#x27;
+&quot;&quot;&quot;).show()       </code></pre></details><pre>Statistiques générales : 
++-----------+-----------+-----------+-----------+--------+
+|minDistance|maxDistance|avgDistance|avgDuration|avgDelay|
++-----------+-----------+-----------+-----------+--------+
+|        185|        887|     553.82|     246.25|   14.84|
++-----------+-----------+-----------+-----------+--------+
+
+</pre></section><section><h2>Exercice 6</h2><details><summary>Voir le code</summary><pre><code># Exercice 6 - Retards les plus importants
+# Afficher uniquement les colonnes trip_id / departure_station / arrival_station / train_type / delay_min
+# Afficher les 10 trajets ayant subi les retards les plus importants, du retard le plus important au moins important
+print(&quot;TOP10 des retards les plus importants : &quot;)
+spark.sql(&quot;&quot;&quot;
+    SELECT
+        trip_id,
+        departure_station,
+        arrival_station,
+        train_type,
+        delay_min
+    FROM trains
+    ORDER BY delay_min DESC
+    LIMIT 10
+&quot;&quot;&quot;).show()</code></pre></details><pre>TOP10 des retards les plus importants : 
++-------+-----------------+---------------+----------+---------+
+|trip_id|departure_station|arrival_station|train_type|delay_min|
++-------+-----------------+---------------+----------+---------+
+|  14976|        Marseille|         Rennes|       TGV|      110|
+|  10201|        Marseille|          Lille|       TGV|      110|
+|  15244|        Marseille|         Nantes|       TGV|      107|
+|  14252|        Marseille|       Bordeaux|Intercités|      100|
+|  14656|       Strasbourg|      Marseille|       TGV|      100|
+|  13801|        Marseille|          Lille|Intercités|      100|
+|  11236|       Strasbourg|      Marseille|       TGV|       93|
+|  12185|        Marseille|     Strasbourg|Intercités|       93|
+|  11196|        Marseille|         Rennes|       TGV|       91|
+|  14842|       Strasbourg|    Montpellier|       TGV|       91|
++-------+-----------------+---------------+----------+---------+
+
+</pre></section><section><h2>Exercice 7</h2><details><summary>Voir le code</summary><pre><code># Exercice 7 - Annulations
+# Calcul du nombre de trajets annulés/non annulés, à présenter sous forme de tableau
+spark.sql(&quot;SELECT DISTINCT cancelled FROM trains&quot;).show()
+print (&quot;Nombre de trajets annulés/non annulés :&quot;)
+cancellation = spark.sql(&quot;&quot;&quot;
+    SELECT
+        cancelled,
+        COUNT(*) AS numberTrips
+    FROM trains
+    GROUP BY cancelled
+&quot;&quot;&quot;)
+display(cancellation)
+</code></pre></details><pre>+---------+
+|cancelled|
++---------+
+|      Yes|
+|       No|
++---------+
+
+Nombre de trajets annulés/non annulés :
+</pre><table><thead><tr><th>cancelled</th><th>numberTrips</th></tr></thead><tbody><tr><td>Yes</td><td>257</td></tr><tr><td>No</td><td>6943</td></tr></tbody></table></section><section><h2>Exercice 8</h2><details><summary>Voir le code</summary><pre><code># Exercice 8 - Classification des retards
+# Ne pas prendre en compte les trajets annulés
+# Création d&#x27;une nouvelle colonne delayLevel pour catégoriser les retards
+#   - 0 à 5 minutes : On time
+#   - 5+ à 15 minutes : Small delay
+#   - 15+ à 30 minutes : Medium delay
+#   - &gt;30 minutes : Large dealy
+spark.sql(&quot;&quot;&quot;
+    CREATE OR REPLACE TEMPORARY VIEW trains_delay_category AS
+    SELECT *,
+        CASE
+            WHEN delay_min &lt;= 5 THEN &#x27;On time&#x27;
+            WHEN delay_min &gt; 5 AND delay_min &lt;= 15 THEN &#x27;Small delay&#x27;
+            WHEN delay_min &gt; 15 AND delay_min &lt;= 30 THEN &#x27;Medium delay&#x27;
+            WHEN delay_min &gt; 30 THEN &#x27;Large delay&#x27;
+        END AS delayLevel
+    FROM trains
+    WHERE cancelled = &#x27;No&#x27;
+&quot;&quot;&quot;)
+# Calcul du nombre de trajets de chaque categorie
+print(&quot;Nombre de trajets pour chaque catégorie de retard :&quot;)
+spark.sql(&quot;&quot;&quot;
+    SELECT
+        delayLevel,
+        COUNT(*) AS numberTrips
+        FROM trains_delay_category
+        GROUP BY delayLevel
+        ORDER BY CASE delayLevel
+            WHEN &#x27;On time&#x27; THEN 1
+            WHEN &#x27;Small delay&#x27; THEN 2
+            WHEN &#x27;Medium delay&#x27; THEN 3
+            WHEN &#x27;Large delay&#x27; THEN 4
+        END
+&quot;&quot;&quot;).show()
+</code></pre></details><pre>Nombre de trajets pour chaque catégorie de retard :
++------------+-----------+
+|  delayLevel|numberTrips|
++------------+-----------+
+|     On time|       2934|
+| Small delay|       1829|
+|Medium delay|       1424|
+| Large delay|        756|
++------------+-----------+
+
+</pre></section><section><h2>Exercice 9</h2><details><summary>Voir le code</summary><pre><code>################
+##  PARTIE C  ##
+################
+# Exercice 9
+# Les trajets annulés ne sont pas pris en compte
+# Pour chaque gare de départ, afficher dans un tableau : nb de trajet décroissant, nb total de passagers, distance moy, retard moy.
+stations =spark.sql(&quot;&quot;&quot;
+    SELECT
+        departure_station,
+        COUNT(*) AS numberTrips,
+        SUM(passengers) AS totalPassengers,
+        ROUND(AVG(distance_km), 2) AS avgDistance,
+        ROUND(AVG(delay_min), 2) AS avgDelay
+    FROM trains
+    WHERE cancelled = &#x27;No&#x27;
+    GROUP BY departure_station
+    ORDER BY numberTrips DESC, departure_station
+&quot;&quot;&quot;)
+display(stations)
+
+</code></pre></details><table><thead><tr><th>departure_station</th><th>numberTrips</th><th>totalPassengers</th><th>avgDistance</th><th>avgDelay</th></tr></thead><tbody><tr><td>Lyon</td><td>702</td><td>244684</td><td>502.1</td><td>13.78</td></tr><tr><td>Nantes</td><td>701</td><td>234468</td><td>529.83</td><td>13.52</td></tr><tr><td>Paris</td><td>697</td><td>232984</td><td>470.48</td><td>14.14</td></tr><tr><td>Strasbourg</td><td>697</td><td>246226</td><td>657.03</td><td>17.36</td></tr><tr><td>Bordeaux</td><td>694</td><td>240653</td><td>546.34</td><td>14.62</td></tr><tr><td>Lille</td><td>694</td><td>241476</td><td>541.06</td><td>14.73</td></tr><tr><td>Marseille</td><td>690</td><td>230612</td><td>613.45</td><td>18.23</td></tr><tr><td>Montpellier</td><td>690</td><td>228153</td><td>555.1</td><td>14.21</td></tr><tr><td>Toulouse</td><td>690</td><td>241388</td><td>555.24</td><td>14.24</td></tr><tr><td>Rennes</td><td>688</td><td>225880</td><td>568.85</td><td>13.57</td></tr></tbody></table></section><section><h2>Exercice 10</h2><details><summary>Voir le code</summary><pre><code># Exercice 10 - Fréquentation des gares
+# Les trajets annulés ne sont pas pris en compte (voir la variable &#x27;stations&#x27; de l&#x27;exercice 9)
+stations.createOrReplaceTempView(&quot;stations&quot;)
+# 1. Top5 des gares de départ ayant transportés le plus de passagers
+print(&quot;Top5 des gares de départ ayant transportés le plus de passagers :&quot;)
+spark.sql(&quot;&quot;&quot;
+            SELECT
+                departure_station,
+                totalPassengers,
+                avgDelay
+            FROM stations
+            ORDER BY totalPassengers DESC
+            LIMIT 5
+&quot;&quot;&quot;).show()
+# 2. Top5 des gares de départ ayant enregistré le plus de trajets
+print(&quot;Top5 des gares de départ ayant enregistré le plus de trajets :&quot;)
+spark.sql(&quot;&quot;&quot;
+    SELECT
+        departure_station,
+        numberTrips,
+        totalPassengers
+    FROM stations
+    ORDER BY numberTrips DESC
+    LIMIT 5
+&quot;&quot;&quot;).show()
+# 3. Top5 des gares ayant le retard moyen le plus élevé
+print(&quot;Top5 des gares ayant le retard moyen le plus élevé :&quot;)
+spark.sql(&quot;&quot;&quot;
+    SELECT
+        departure_station,
+        avgDelay,
+        totalPassengers
+    FROM stations
+    ORDER BY avgDelay DESC
+    LIMIT 5
+&quot;&quot;&quot;).show()</code></pre></details><pre>Top5 des gares de départ ayant transportés le plus de passagers :
++-----------------+---------------+--------+
+|departure_station|totalPassengers|avgDelay|
++-----------------+---------------+--------+
+|       Strasbourg|         246226|   17.36|
+|             Lyon|         244684|   13.78|
+|            Lille|         241476|   14.73|
+|         Toulouse|         241388|   14.24|
+|         Bordeaux|         240653|   14.62|
++-----------------+---------------+--------+
+
+Top5 des gares de départ ayant enregistré le plus de trajets :
++-----------------+-----------+---------------+
+|departure_station|numberTrips|totalPassengers|
++-----------------+-----------+---------------+
+|             Lyon|        702|         244684|
+|           Nantes|        701|         234468|
+|            Paris|        697|         232984|
+|       Strasbourg|        697|         246226|
+|         Bordeaux|        694|         240653|
++-----------------+-----------+---------------+
+
+Top5 des gares ayant le retard moyen le plus élevé :
++-----------------+--------+---------------+
+|departure_station|avgDelay|totalPassengers|
++-----------------+--------+---------------+
+|        Marseille|   18.23|         230612|
+|       Strasbourg|   17.36|         246226|
+|            Lille|   14.73|         241476|
+|         Bordeaux|   14.62|         240653|
+|         Toulouse|   14.24|         241388|
++-----------------+--------+---------------+
+
+</pre></section><section><h2>Exercice 11</h2><details><summary>Voir le code</summary><pre><code># Exercice 11 - Interprétation
+# ●	Les gares ayant le plus grand nombre de trajets sont-elles également celles transportant le plus de passagers ?
+# ●	Les gares les plus fréquentées sont-elles celles qui présentent les retards moyens les plus élevés ?
+print(&quot;&quot;&quot;Les classement de gares ne sont pas identiques : \n
+Les villes assurant le plus de trajets ne sont pas les plus fréquentées \n
+(ex Paris : 697 trajets pour seulement 232984 passagers vs Bordeaux : 694 trajets pour 240653 passagers). \n
+Les villes les plus fréquentées ne sont pas celles présentant les retards moyens les plus élevés \n
+(ex Lyon est dans le TOP5 gare les plus fréquentées mais n&#x27;est pas dans le TOP5 des gares présentant les retards moyens les plus élevés) \n
+(ex Marseille est dans le TOP5 des gares présentant les retards moyens les plus élevés mais n&#x27;est pas dans le TOP5 des gares les plus fréquentées)
+&quot;&quot;&quot;)</code></pre></details><pre>Les classement de gares ne sont pas identiques : 
+
+Les villes assurant le plus de trajets ne sont pas les plus fréquentées 
+
+(ex Paris : 697 trajets pour seulement 232984 passagers vs Bordeaux : 694 trajets pour 240653 passagers). 
+
+Les villes les plus fréquentées ne sont pas celles présentant les retards moyens les plus élevés 
+
+(ex Lyon est dans le TOP5 gare les plus fréquentées mais n&#x27;est pas dans le TOP5 des gares présentant les retards moyens les plus élevés) 
+
+(ex Marseille est dans le TOP5 des gares présentant les retards moyens les plus élevés mais n&#x27;est pas dans le TOP5 des gares les plus fréquentées)
+
+</pre></section><section><h2>Exercice 12</h2><details><summary>Voir le code</summary><pre><code>################
+##  PARTIE D  ##
+################
+# Exercice 12 - Statistiques par ligne
+# Les trajets annulés ne sont pas pris en compte
+# Pour chaque ligne ferroviaire, afficher : nb de trajet, nb total de passagers, retard moy, retard maximum.
+print(&quot;Statistiques par ligne ferroviaire :&quot;)
+lines = spark.sql(&quot;&quot;&quot;
+    SELECT
+        departure_station,
+        arrival_station,
+        COUNT(*) AS numberTrips,
+        SUM(passengers) AS totalPassengers,
+        ROUND(AVG(delay_min), 2) AS avgDelay,
+        MAX(delay_min) AS maxDelay
+    FROM trains
+    WHERE cancelled = &#x27;No&#x27;
+    GROUP BY departure_station, arrival_station
+&quot;&quot;&quot;)
+display(lines)
+lines.createOrReplaceTempView(&quot;lines&quot;)
+
+</code></pre></details><pre>Statistiques par ligne ferroviaire :
+</pre><table><thead><tr><th>departure_station</th><th>arrival_station</th><th>numberTrips</th><th>totalPassengers</th><th>avgDelay</th><th>maxDelay</th></tr></thead><tbody><tr><td>Paris</td><td>Lille</td><td>79</td><td>20462</td><td>13.97</td><td>86</td></tr><tr><td>Lyon</td><td>Paris</td><td>78</td><td>27156</td><td>14.44</td><td>80</td></tr><tr><td>Marseille</td><td>Rennes</td><td>75</td><td>26874</td><td>23.19</td><td>110</td></tr><tr><td>Lille</td><td>Bordeaux</td><td>73</td><td>25946</td><td>13.51</td><td>85</td></tr><tr><td>Bordeaux</td><td>Lyon</td><td>76</td><td>26810</td><td>13.5</td><td>82</td></tr><tr><td>Toulouse</td><td>Montpellier</td><td>75</td><td>27608</td><td>16.84</td><td>80</td></tr><tr><td>Strasbourg</td><td>Lyon</td><td>75</td><td>24871</td><td>17.11</td><td>86</td></tr><tr><td>Rennes</td><td>Marseille</td><td>76</td><td>24613</td><td>13.68</td><td>78</td></tr><tr><td>Rennes</td><td>Bordeaux</td><td>76</td><td>26803</td><td>12.41</td><td>81</td></tr><tr><td>Lyon</td><td>Lille</td><td>75</td><td>25524</td><td>13.57</td><td>85</td></tr><tr><td>Lille</td><td>Strasbourg</td><td>80</td><td>29690</td><td>18.5</td><td>89</td></tr><tr><td>Bordeaux</td><td>Paris</td><td>78</td><td>29234</td><td>16.76</td><td>85</td></tr><tr><td>Bordeaux</td><td>Strasbourg</td><td>72</td><td>26406</td><td>13.71</td><td>85</td></tr><tr><td>Nantes</td><td>Toulouse</td><td>79</td><td>26371</td><td>12.76</td><td>83</td></tr><tr><td>Rennes</td><td>Nantes</td><td>77</td><td>15421</td><td>14.78</td><td>81</td></tr><tr><td>Montpellier</td><td>Paris</td><td>76</td><td>25567</td><td>13.54</td><td>89</td></tr><tr><td>Marseille</td><td>Strasbourg</td><td>77</td><td>27158</td><td>18.49</td><td>93</td></tr><tr><td>Bordeaux</td><td>Lille</td><td>79</td><td>27525</td><td>15.34</td><td>90</td></tr><tr><td>Rennes</td><td>Lyon</td><td>77</td><td>26245</td><td>11.71</td><td>85</td></tr><tr><td>Montpellier</td><td>Strasbourg</td><td>78</td><td>28241</td><td>17.62</td><td>90</td></tr><tr><td>Montpellier</td><td>Rennes</td><td>75</td><td>27196</td><td>13.57</td><td>83</td></tr><tr><td>Montpellier</td><td>Nantes</td><td>76</td><td>27883</td><td>18.28</td><td>74</td></tr><tr><td>Paris</td><td>Montpellier</td><td>80</td><td>27165</td><td>11.16</td><td>77</td></tr><tr><td>Bordeaux</td><td>Marseille</td><td>77</td><td>27341</td><td>11.81</td><td>79</td></tr><tr><td>Paris</td><td>Marseille</td><td>79</td><td>28811</td><td>15.27</td><td>84</td></tr><tr><td>Paris</td><td>Nantes</td><td>72</td><td>22948</td><td>15.32</td><td>82</td></tr><tr><td>Lyon</td><td>Toulouse</td><td>79</td><td>29149</td><td>13.59</td><td>70</td></tr><tr><td>Marseille</td><td>Montpellier</td><td>78</td><td>20871</td><td>20.04</td><td>90</td></tr><tr><td>Bordeaux</td><td>Toulouse</td><td>77</td><td>23509</td><td>13.08</td><td>76</td></tr><tr><td>Montpellier</td><td>Bordeaux</td><td>74</td><td>24608</td><td>13.84</td><td>77</td></tr><tr><td>Bordeaux</td><td>Rennes</td><td>78</td><td>28246</td><td>17.69</td><td>90</td></tr><tr><td>Nantes</td><td>Marseille</td><td>78</td><td>28539</td><td>15.87</td><td>89</td></tr><tr><td>Nantes</td><td>Rennes</td><td>78</td><td>20101</td><td>13.92</td><td>79</td></tr><tr><td>Rennes</td><td>Paris</td><td>71</td><td>25182</td><td>14.93</td><td>89</td></tr><tr><td>Rennes</td><td>Toulouse</td><td>80</td><td>28597</td><td>16.4</td><td>87</td></tr><tr><td>Marseille</td><td>Paris</td><td>77</td><td>26882</td><td>16.43</td><td>85</td></tr><tr><td>Marseille</td><td>Lyon</td><td>77</td><td>21726</td><td>15.09</td><td>80</td></tr><tr><td>Marseille</td><td>Nantes</td><td>75</td><td>24817</td><td>17.09</td><td>107</td></tr><tr><td>Bordeaux</td><td>Nantes</td><td>79</td><td>23386</td><td>14.03</td><td>87</td></tr><tr><td>Nantes</td><td>Strasbourg</td><td>79</td><td>28858</td><td>9.81</td><td>73</td></tr><tr><td>Rennes</td><td>Strasbourg</td><td>77</td><td>24252</td><td>14.36</td><td>90</td></tr><tr><td>Paris</td><td>Rennes</td><td>78</td><td>26397</td><td>14.19</td><td>87</td></tr><tr><td>Montpellier</td><td>Lyon</td><td>79</td><td>24768</td><td>12.19</td><td>77</td></tr><tr><td>Paris</td><td>Bordeaux</td><td>79</td><td>26617</td><td>12.75</td><td>86</td></tr><tr><td>Toulouse</td><td>Lyon</td><td>78</td><td>28340</td><td>10.36</td><td>85</td></tr><tr><td>Strasbourg</td><td>Bordeaux</td><td>78</td><td>28317</td><td>19.35</td><td>87</td></tr><tr><td>Lyon</td><td>Rennes</td><td>79</td><td>28999</td><td>12.29</td><td>70</td></tr><tr><td>Marseille</td><td>Lille</td><td>75</td><td>26494</td><td>22.28</td><td>110</td></tr><tr><td>Lille</td><td>Nantes</td><td>78</td><td>26622</td><td>12.17</td><td>69</td></tr><tr><td>Bordeaux</td><td>Montpellier</td><td>78</td><td>28196</td><td>15.54</td><td>85</td></tr><tr><td>Toulouse</td><td>Strasbourg</td><td>79</td><td>28395</td><td>13.18</td><td>79</td></tr><tr><td>Strasbourg</td><td>Lille</td><td>78</td><td>28232</td><td>18.44</td><td>85</td></tr><tr><td>Lille</td><td>Marseille</td><td>74</td><td>26174</td><td>13.08</td><td>79</td></tr><tr><td>Toulouse</td><td>Marseille</td><td>75</td><td>26279</td><td>14.96</td><td>73</td></tr><tr><td>Toulouse</td><td>Nantes</td><td>76</td><td>27309</td><td>13.04</td><td>90</td></tr><tr><td>Strasbourg</td><td>Toulouse</td><td>78</td><td>25949</td><td>15.96</td><td>89</td></tr><tr><td>Strasbourg</td><td>Rennes</td><td>79</td><td>28492</td><td>16.27</td><td>89</td></tr><tr><td>Strasbourg</td><td>Montpellier</td><td>77</td><td>25762</td><td>16.18</td><td>91</td></tr><tr><td>Montpellier</td><td>Toulouse</td><td>77</td><td>25866</td><td>11.56</td><td>81</td></tr><tr><td>Paris</td><td>Strasbourg</td><td>75</td><td>27162</td><td>14.56</td><td>82</td></tr><tr><td>Lyon</td><td>Nantes</td><td>79</td><td>27939</td><td>10.65</td><td>88</td></tr><tr><td>Lille</td><td>Lyon</td><td>76</td><td>27228</td><td>16.67</td><td>82</td></tr><tr><td>Lille</td><td>Montpellier</td><td>80</td><td>29136</td><td>17.7</td><td>80</td></tr><tr><td>Toulouse</td><td>Paris</td><td>77</td><td>27591</td><td>18.65</td><td>89</td></tr><tr><td>Toulouse</td><td>Bordeaux</td><td>79</td><td>24201</td><td>15.49</td><td>90</td></tr><tr><td>Toulouse</td><td>Rennes</td><td>75</td><td>25167</td><td>13.19</td><td>74</td></tr><tr><td>Nantes</td><td>Lyon</td><td>76</td><td>26484</td><td>15.08</td><td>90</td></tr><tr><td>Montpellier</td><td>Lille</td><td>78</td><td>27008</td><td>15.28</td><td>74</td></tr><tr><td>Strasbourg</td><td>Marseille</td><td>78</td><td>28488</td><td>20.23</td><td>100</td></tr><tr><td>Marseille</td><td>Bordeaux</td><td>77</td><td>26827</td><td>15.18</td><td>100</td></tr><tr><td>Lille</td><td>Toulouse</td><td>77</td><td>26109</td><td>12.96</td><td>90</td></tr><tr><td>Nantes</td><td>Bordeaux</td><td>76</td><td>24537</td><td>12.63</td><td>85</td></tr><tr><td>Nantes</td><td>Montpellier</td><td>76</td><td>25629</td><td>14.3</td><td>77</td></tr><tr><td>Strasbourg</td><td>Paris</td><td>76</td><td>29676</td><td>13.96</td><td>85</td></tr><tr><td>Paris</td><td>Toulouse</td><td>77</td><td>25855</td><td>17.88</td><td>89</td></tr><tr><td>Lyon</td><td>Marseille</td><td>77</td><td>23972</td><td>14.44</td><td>79</td></tr><tr><td>Lyon</td><td>Strasbourg</td><td>78</td><td>30115</td><td>12.17</td><td>84</td></tr><tr><td>Marseille</td><td>Toulouse</td><td>79</td><td>28963</td><td>16.54</td><td>81</td></tr><tr><td>Lille</td><td>Paris</td><td>77</td><td>21152</td><td>14.19</td><td>66</td></tr><tr><td>Toulouse</td><td>Lille</td><td>76</td><td>26498</td><td>12.51</td><td>88</td></tr><tr><td>Nantes</td><td>Paris</td><td>80</td><td>26488</td><td>13.64</td><td>83</td></tr><tr><td>Nantes</td><td>Lille</td><td>79</td><td>27461</td><td>13.76</td><td>89</td></tr><tr><td>Rennes</td><td>Lille</td><td>77</td><td>26034</td><td>12.87</td><td>87</td></tr><tr><td>Rennes</td><td>Montpellier</td><td>77</td><td>28733</td><td>10.92</td><td>86</td></tr><tr><td>Strasbourg</td><td>Nantes</td><td>78</td><td>26439</td><td>18.64</td><td>78</td></tr><tr><td>Montpellier</td><td>Marseille</td><td>77</td><td>17016</td><td>12.05</td><td>83</td></tr><tr><td>Paris</td><td>Lyon</td><td>78</td><td>27567</td><td>12.36</td><td>76</td></tr><tr><td>Lyon</td><td>Bordeaux</td><td>78</td><td>26378</td><td>15.21</td><td>83</td></tr><tr><td>Lyon</td><td>Montpellier</td><td>79</td><td>25452</td><td>17.66</td><td>90</td></tr><tr><td>Lille</td><td>Rennes</td><td>79</td><td>29419</td><td>13.53</td><td>83</td></tr></tbody></table></section><section><h2>Exercice 13</h2><details><summary>Voir le code</summary><pre><code># Exercice 13 - Comparaison des lignes
+# Classement A :Top10 des lignes ayant le plus grand nombre de passagers
+print(&quot;Top10 des lignes ayant le plus grand nombre de passagers :&quot;)
+spark.sql(&quot;&quot;&quot;
+    SELECT
+        departure_station,
+        arrival_station,
+        totalPassengers,
+        numberTrips,
+        avgDelay
+    FROM lines
+    ORDER BY totalPassengers DESC
+    LIMIT 10
+&quot;&quot;&quot;).show()
+
+# Interprétation
+print(&quot;Les lignes les plus fréquentées sont celles présentant le plus de trajets (sauf Strasbourg-Paris).&quot;)
+print (&quot;Sur ces lignes fréquentées, les retards importants sont sur Lille-Starsbourg et Lille-Montpellier. \n \n&quot;)
+
+
+# Classement B :Top10 des lignes ayant le retard moyen le plus élevé
+print(&quot;Top10 des lignes ayant le retard moyen le plus élevé :&quot;)
+spark.sql(&quot;&quot;&quot;
+    SELECT
+        departure_station,
+        arrival_station,
+        avgDelay,
+        maxDelay,
+        numberTrips,
+        totalPassengers
+    FROM lines
+    ORDER BY avgDelay DESC
+    LIMIT 10
+&quot;&quot;&quot;).show()
+# Interprétation
+print(&quot;Les lignes ayant le retard moyen le plus élevé sont celles qui présentent un retard maximum important.&quot;)</code></pre></details><pre>Top10 des lignes ayant le plus grand nombre de passagers :
++-----------------+---------------+---------------+-----------+--------+
+|departure_station|arrival_station|totalPassengers|numberTrips|avgDelay|
++-----------------+---------------+---------------+-----------+--------+
+|             Lyon|     Strasbourg|          30115|         78|   12.17|
+|            Lille|     Strasbourg|          29690|         80|    18.5|
+|       Strasbourg|          Paris|          29676|         76|   13.96|
+|            Lille|         Rennes|          29419|         79|   13.53|
+|         Bordeaux|          Paris|          29234|         78|   16.76|
+|             Lyon|       Toulouse|          29149|         79|   13.59|
+|            Lille|    Montpellier|          29136|         80|    17.7|
+|             Lyon|         Rennes|          28999|         79|   12.29|
+|        Marseille|       Toulouse|          28963|         79|   16.54|
+|           Nantes|     Strasbourg|          28858|         79|    9.81|
++-----------------+---------------+---------------+-----------+--------+
+
+Les lignes les plus fréquentées sont celles présentant le plus de trajets (sauf Strasbourg-Paris).
+Sur ces lignes fréquentées, les retards importants sont sur Lille-Starsbourg et Lille-Montpellier. 
+ 
+
+Top10 des lignes ayant le retard moyen le plus élevé :
++-----------------+---------------+--------+--------+-----------+---------------+
+|departure_station|arrival_station|avgDelay|maxDelay|numberTrips|totalPassengers|
++-----------------+---------------+--------+--------+-----------+---------------+
+|        Marseille|         Rennes|   23.19|     110|         75|          26874|
+|        Marseille|          Lille|   22.28|     110|         75|          26494|
+|       Strasbourg|      Marseille|   20.23|     100|         78|          28488|
+|        Marseille|    Montpellier|   20.04|      90|         78|          20871|
+|       Strasbourg|       Bordeaux|   19.35|      87|         78|          28317|
+|         Toulouse|          Paris|   18.65|      89|         77|          27591|
+|       Strasbourg|         Nantes|   18.64|      78|         78|          26439|
+|            Lille|     Strasbourg|    18.5|      89|         80|          29690|
+|        Marseille|     Strasbourg|   18.49|      93|         77|          27158|
+|       Strasbourg|          Lille|   18.44|      85|         78|          28232|
++-----------------+---------------+--------+--------+-----------+---------------+
+
+Les lignes ayant le retard moyen le plus élevé sont celles qui présentent un retard maximum important.
+</pre></section><section><h2>Exercice 14</h2><details><summary>Voir le code</summary><pre><code># Exercice 14 - Fiabilité de l&#x27;analyse
+# Top10 des lignes ayant le retard moyen le plus élevé avec des lignes ayant réalisé au moins 30 trajets
+print(&quot;Top10 des lignes ayant le retard moyen le plus élevé avec des lignes ayant réalisé au moins 30 trajets :&quot;)
+spark.sql(&quot;&quot;&quot;
+    SELECT
+        departure_station,
+        arrival_station,
+        avgDelay,
+        maxDelay,
+        numberTrips,
+        totalPassengers
+    FROM lines
+    WHERE numberTrips &gt;= 30
+    ORDER BY avgDelay DESC
+    LIMIT 10
+&quot;&quot;&quot;).show()
+
+# Comparatif avec le résultat de l&#x27;exercice 13
+print(&quot;&quot;&quot;Les résultats sont identiques à l&#x27;exercice 13 car les lignes comportent toutes plus de 30 trajets. \n
+L&#x27;analyse réalisée lors de l&#x27;exercice 13 est donc fiable au regard du nombre ds trajets réalisés sur les lignes.\n \n
+&quot;&quot;&quot;)
+
+</code></pre></details><pre>Top10 des lignes ayant le retard moyen le plus élevé avec des lignes ayant réalisé au moins 30 trajets :
++-----------------+---------------+--------+--------+-----------+---------------+
+|departure_station|arrival_station|avgDelay|maxDelay|numberTrips|totalPassengers|
++-----------------+---------------+--------+--------+-----------+---------------+
+|        Marseille|         Rennes|   23.19|     110|         75|          26874|
+|        Marseille|          Lille|   22.28|     110|         75|          26494|
+|       Strasbourg|      Marseille|   20.23|     100|         78|          28488|
+|        Marseille|    Montpellier|   20.04|      90|         78|          20871|
+|       Strasbourg|       Bordeaux|   19.35|      87|         78|          28317|
+|         Toulouse|          Paris|   18.65|      89|         77|          27591|
+|       Strasbourg|         Nantes|   18.64|      78|         78|          26439|
+|            Lille|     Strasbourg|    18.5|      89|         80|          29690|
+|        Marseille|     Strasbourg|   18.49|      93|         77|          27158|
+|       Strasbourg|          Lille|   18.44|      85|         78|          28232|
++-----------------+---------------+--------+--------+-----------+---------------+
+
+Les résultats sont identiques à l&#x27;exercice 13 car les lignes comportent toutes plus de 30 trajets. 
+
+L&#x27;analyse réalisée lors de l&#x27;exercice 13 est donc fiable au regard du nombre ds trajets réalisés sur les lignes.
+ 
+
+
+</pre></section><section><h2>Exercice 15</h2><details><summary>Voir le code</summary><pre><code>################
+##  PARTIE E  ##
+################
+
+# Exercice 15 - Analyse des types de trains
+# Afficher pour chaque type de train : nb de trajets non annulés, distance moy, durée moy, retard moy, nb de passagers
+print(&quot;Analyse par types de trains :&quot;)
+trains = spark.sql(&quot;&quot;&quot;
+    SELECT
+        train_type,
+        COUNT(*) AS numberTrips,
+        ROUND(AVG(distance_km), 2) AS avgDistance,
+        ROUND(AVG(duration_min), 2) AS avgDuration,
+        ROUND(AVG(delay_min), 2) AS avgDelay,
+        SUM(passengers) AS totalPassengers
+    FROM trains
+    WHERE cancelled = &#x27;No&#x27;
+    GROUP BY train_type
+&quot;&quot;&quot;).show()</code></pre></details><pre>Analyse par types de trains :
++----------+-----------+-----------+-----------+--------+---------------+
+|train_type|numberTrips|avgDistance|avgDuration|avgDelay|totalPassengers|
++----------+-----------+-----------+-----------+--------+---------------+
+|Intercités|       1809|     538.42|     299.29|   14.44|         486172|
+|       TGV|       4170|     583.32|      196.1|   14.92|        1710299|
+|       TER|        964|     455.16|     363.63|   15.22|         170053|
++----------+-----------+-----------+-----------+--------+---------------+
+
+</pre></section><section><h2>Exercice 16</h2><details><summary>Voir le code</summary><pre><code># Exercice 16 - Types de trains et retards
+# Les trajets annulés ne sont pas pris en compte
+# Affichage des types de trains dont le retard moyen est supérieur à 10 minutes
+print(&quot;Types de trains dont le retard moyen est supérieur à 10 minutes :&quot;)
+spark.sql(&quot;&quot;&quot;
+    SELECT
+        train_type,
+        COUNT(*) AS numberTrips,
+        ROUND(AVG(delay_min), 2) AS avgDelay
+    FROM trains
+    WHERE cancelled = &#x27;No&#x27;
+    GROUP BY train_type
+    HAVING AVG(delay_min) &gt; 10
+&quot;&quot;&quot;).show()</code></pre></details><pre>Types de trains dont le retard moyen est supérieur à 10 minutes :
++----------+-----------+--------+
+|train_type|numberTrips|avgDelay|
++----------+-----------+--------+
+|Intercités|       1809|   14.44|
+|       TGV|       4170|   14.92|
+|       TER|        964|   15.22|
++----------+-----------+--------+
+
+</pre></section><section><h2>Exercice 17</h2><details><summary>Voir le code</summary><pre><code># Exercice 17 - Analyse des compagnies
+# Affichage pour chaque compagnie : nb de trajets décroissant, nb de trajets annulés, nb total de passagers, retard moy des trajets non annulés
+print(&quot;Analyse par compagnies :&quot;)
+spark.sql(&quot;&quot;&quot;
+    SELECT
+        company,
+        COUNT(*) AS numberTrips,
+        SUM(CASE WHEN cancelled = &#x27;Yes&#x27; THEN 1 ELSE 0 END) AS cancelledTrips,
+        SUM(passengers) AS totalPassengers,
+        ROUND(AVG(CASE WHEN cancelled = &#x27;No&#x27; THEN delay_min END), 2) AS avgDelay
+    FROM trains
+    GROUP BY company
+    ORDER BY numberTrips DESC
+&quot;&quot;&quot;).show()
+</code></pre></details><pre>Analyse par compagnies :
++-----------+-----------+--------------+---------------+--------+
+|    company|numberTrips|cancelledTrips|totalPassengers|avgDelay|
++-----------+-----------+--------------+---------------+--------+
+|       SNCF|       4774|           175|        1572622|   14.98|
+|RailExpress|       1391|            47|         453103|   14.46|
+|   HexaRail|       1035|            35|         340799|   14.69|
++-----------+-----------+--------------+---------------+--------+
+
+</pre></section><section><h2>Exercice 18</h2><details><summary>Voir le code</summary><pre><code># Exercie 18 - Compagnies et type de trains
+# Affichage du TOP10 pour chaque combinaison company + train_type : nb de trajets total (annulé et non annulés), nb de passagers décroissant, retard moy (sur trajets non annulés)
+print(&quot;TOP10 du plus grand nombre de passagers pour chaque combinaison company + train_type :&quot;)
+spark.sql(&quot;&quot;&quot;
+    SELECT
+        company,
+        train_type,
+        COUNT(*) AS numberTrips,
+        SUM(passengers) AS totalPassengers,
+        ROUND(AVG(CASE WHEN cancelled = &#x27;No&#x27; THEN delay_min END), 2) AS avgDelay
+    FROM trains
+    GROUP BY company, train_type
+    ORDER BY totalPassengers DESC
+    LIMIT 10
+&quot;&quot;&quot;).show()
+</code></pre></details><pre>TOP10 du plus grand nombre de passagers pour chaque combinaison company + train_type :
++-----------+----------+-----------+---------------+--------+
+|    company|train_type|numberTrips|totalPassengers|avgDelay|
++-----------+----------+-----------+---------------+--------+
+|       SNCF|       TGV|       2872|        1138545|   15.06|
+|       SNCF|Intercités|       1263|         325074|   14.33|
+|RailExpress|       TGV|        826|         321564|   14.29|
+|   HexaRail|       TGV|        623|         250190|   15.11|
+|       SNCF|       TER|        639|         109003|   15.88|
+|RailExpress|Intercités|        368|          96985|   15.21|
+|   HexaRail|Intercités|        260|          64113|   13.88|
+|RailExpress|       TER|        197|          34554|   13.76|
+|   HexaRail|       TER|        152|          26496|   14.32|
++-----------+----------+-----------+---------------+--------+
+
+</pre></section><section><h2>Exercice 19</h2><details><summary>Voir le code</summary><pre><code>################
+##  PARTIE F  ##
+################
+# Exercice 19 - Indicateur de ponctualité
+# Les trajets annulés ne sont pas pris en compte
+# Affichage pour chaque gare : nb trajets non annulés, nb passagers, retard moy,retard max, nb trajets retardés &gt; 15 minutes, taux de trajets retardés &gt; 15 minutes
+print(&quot;Indicateur de ponctualité par gare de départ&quot;)
+punctuality = spark.sql(&quot;&quot;&quot;
+    SELECT
+        departure_station,
+        COUNT(*) AS numberTrips,
+        SUM(passengers) AS totalPassengers,
+        ROUND(AVG(delay_min), 2) AS avgDelay,
+        MAX(delay_min) AS maxDelay,
+        SUM(CASE WHEN delay_min &gt; 15 THEN 1 ELSE 0 END) AS delayedTrips,
+        ROUND(100*delayedTrips/numberTrips, 2) AS delayrate
+    FROM trains
+    WHERE cancelled = &#x27;No&#x27;
+    GROUP BY departure_station
+    ORDER BY delayrate DESC
+&quot;&quot;&quot;)
+punctuality.show()</code></pre></details><pre>Indicateur de ponctualité par gare de départ
++-----------------+-----------+---------------+--------+--------+------------+---------+
+|departure_station|numberTrips|totalPassengers|avgDelay|maxDelay|delayedTrips|delayrate|
++-----------------+-----------+---------------+--------+--------+------------+---------+
+|        Marseille|        690|         230612|   18.23|     110|         291|    42.17|
+|       Strasbourg|        697|         246226|   17.36|     100|         283|     40.6|
+|      Montpellier|        690|         228153|   14.21|      90|         212|    30.72|
+|         Bordeaux|        694|         240653|   14.62|      90|         206|    29.68|
+|         Toulouse|        690|         241388|   14.24|      90|         204|    29.57|
+|             Lyon|        702|         244684|   13.78|      90|         205|     29.2|
+|            Lille|        694|         241476|   14.73|      90|         202|    29.11|
+|            Paris|        697|         232984|   14.14|      89|         199|    28.55|
+|           Rennes|        688|         225880|   13.57|      90|         188|    27.33|
+|           Nantes|        701|         234468|   13.52|      90|         190|     27.1|
++-----------------+-----------+---------------+--------+--------+------------+---------+
+
+</pre></section><section><h2>Exercice 20</h2><details><summary>Voir le code</summary><pre><code># Exercice 20 - Rapport sur les lignes
+# Les trajets annulés ne sont pas pris en compte, les lignes possédant moins de 30 trajets sont exclues
+# Affichage d&#x27;un rapport pour chaque ligne ferroviaire : nb trajets non annulés, nb passagers, nb moy de passagers, durée moy, retard moy,retard max
+print(&quot;Rapport pour chaque ligne ferroviaire :&quot;)
+line_report = spark.sql(&quot;&quot;&quot;
+    SELECT
+        departure_station,
+        arrival_station,
+        COUNT(*) AS numberTrips,
+        SUM(passengers) AS totalPassengers,
+        ROUND(AVG(passengers), 2) AS avgPassengers,
+        ROUND(AVG(duration_min), 2) AS avgDuration,
+        ROUND(AVG(delay_min), 2) AS avgDelay,
+        MAX(delay_min) AS maxDelay
+    FROM trains
+    WHERE cancelled = &#x27;No&#x27;
+    GROUP BY departure_station, arrival_station
+    HAVING numberTrips &gt;= 30
+    ORDER BY totalPassengers DESC
+&quot;&quot;&quot;)
+display(line_report)</code></pre></details><pre>Rapport pour chaque ligne ferroviaire :
+</pre><table><thead><tr><th>departure_station</th><th>arrival_station</th><th>numberTrips</th><th>totalPassengers</th><th>avgPassengers</th><th>avgDuration</th><th>avgDelay</th><th>maxDelay</th></tr></thead><tbody><tr><td>Lyon</td><td>Strasbourg</td><td>78</td><td>30115</td><td>386.09</td><td>161.58</td><td>12.17</td><td>84</td></tr><tr><td>Lille</td><td>Strasbourg</td><td>80</td><td>29690</td><td>371.13</td><td>198.78</td><td>18.5</td><td>89</td></tr><tr><td>Strasbourg</td><td>Paris</td><td>76</td><td>29676</td><td>390.47</td><td>176.79</td><td>13.96</td><td>85</td></tr><tr><td>Lille</td><td>Rennes</td><td>79</td><td>29419</td><td>372.39</td><td>169.7</td><td>13.53</td><td>83</td></tr><tr><td>Bordeaux</td><td>Paris</td><td>78</td><td>29234</td><td>374.79</td><td>233.17</td><td>16.76</td><td>85</td></tr><tr><td>Lyon</td><td>Toulouse</td><td>79</td><td>29149</td><td>368.97</td><td>218.63</td><td>13.59</td><td>70</td></tr><tr><td>Lille</td><td>Montpellier</td><td>80</td><td>29136</td><td>364.2</td><td>317.1</td><td>17.7</td><td>80</td></tr><tr><td>Lyon</td><td>Rennes</td><td>79</td><td>28999</td><td>367.08</td><td>292.65</td><td>12.29</td><td>70</td></tr><tr><td>Marseille</td><td>Toulouse</td><td>79</td><td>28963</td><td>366.62</td><td>220.99</td><td>16.54</td><td>81</td></tr><tr><td>Nantes</td><td>Strasbourg</td><td>79</td><td>28858</td><td>365.29</td><td>330.43</td><td>9.81</td><td>73</td></tr><tr><td>Paris</td><td>Marseille</td><td>79</td><td>28811</td><td>364.7</td><td>284.23</td><td>15.27</td><td>84</td></tr><tr><td>Rennes</td><td>Montpellier</td><td>77</td><td>28733</td><td>373.16</td><td>319.99</td><td>10.92</td><td>86</td></tr><tr><td>Rennes</td><td>Toulouse</td><td>80</td><td>28597</td><td>357.46</td><td>262.81</td><td>16.4</td><td>87</td></tr><tr><td>Nantes</td><td>Marseille</td><td>78</td><td>28539</td><td>365.88</td><td>350.58</td><td>15.87</td><td>89</td></tr><tr><td>Strasbourg</td><td>Rennes</td><td>79</td><td>28492</td><td>360.66</td><td>342.33</td><td>16.27</td><td>89</td></tr><tr><td>Strasbourg</td><td>Marseille</td><td>78</td><td>28488</td><td>365.23</td><td>274.41</td><td>20.23</td><td>100</td></tr><tr><td>Toulouse</td><td>Strasbourg</td><td>79</td><td>28395</td><td>359.43</td><td>353.56</td><td>13.18</td><td>79</td></tr><tr><td>Toulouse</td><td>Lyon</td><td>78</td><td>28340</td><td>363.33</td><td>230.17</td><td>10.36</td><td>85</td></tr><tr><td>Strasbourg</td><td>Bordeaux</td><td>78</td><td>28317</td><td>363.04</td><td>366.87</td><td>19.35</td><td>87</td></tr><tr><td>Bordeaux</td><td>Rennes</td><td>78</td><td>28246</td><td>362.13</td><td>167.58</td><td>17.69</td><td>90</td></tr><tr><td>Montpellier</td><td>Strasbourg</td><td>78</td><td>28241</td><td>362.06</td><td>295.64</td><td>17.62</td><td>90</td></tr><tr><td>Strasbourg</td><td>Lille</td><td>78</td><td>28232</td><td>361.95</td><td>201.9</td><td>18.44</td><td>85</td></tr><tr><td>Bordeaux</td><td>Montpellier</td><td>78</td><td>28196</td><td>361.49</td><td>261.51</td><td>15.54</td><td>85</td></tr><tr><td>Lyon</td><td>Nantes</td><td>79</td><td>27939</td><td>353.66</td><td>292.63</td><td>10.65</td><td>88</td></tr><tr><td>Montpellier</td><td>Nantes</td><td>76</td><td>27883</td><td>366.88</td><td>303.36</td><td>18.28</td><td>74</td></tr><tr><td>Toulouse</td><td>Montpellier</td><td>75</td><td>27608</td><td>368.11</td><td>159.19</td><td>16.84</td><td>80</td></tr><tr><td>Toulouse</td><td>Paris</td><td>77</td><td>27591</td><td>358.32</td><td>267.66</td><td>18.65</td><td>89</td></tr><tr><td>Paris</td><td>Lyon</td><td>78</td><td>27567</td><td>353.42</td><td>186.24</td><td>12.36</td><td>76</td></tr><tr><td>Bordeaux</td><td>Lille</td><td>79</td><td>27525</td><td>348.42</td><td>282.05</td><td>15.34</td><td>90</td></tr><tr><td>Nantes</td><td>Lille</td><td>79</td><td>27461</td><td>347.61</td><td>200.25</td><td>13.76</td><td>89</td></tr><tr><td>Bordeaux</td><td>Marseille</td><td>77</td><td>27341</td><td>355.08</td><td>290.14</td><td>11.81</td><td>79</td></tr><tr><td>Toulouse</td><td>Nantes</td><td>76</td><td>27309</td><td>359.33</td><td>217.38</td><td>13.04</td><td>90</td></tr><tr><td>Lille</td><td>Lyon</td><td>76</td><td>27228</td><td>358.26</td><td>241.46</td><td>16.67</td><td>82</td></tr><tr><td>Montpellier</td><td>Rennes</td><td>75</td><td>27196</td><td>362.61</td><td>350.64</td><td>13.57</td><td>83</td></tr><tr><td>Paris</td><td>Montpellier</td><td>80</td><td>27165</td><td>339.56</td><td>269.43</td><td>11.16</td><td>77</td></tr><tr><td>Paris</td><td>Strasbourg</td><td>75</td><td>27162</td><td>362.16</td><td>199.16</td><td>14.56</td><td>82</td></tr><tr><td>Marseille</td><td>Strasbourg</td><td>77</td><td>27158</td><td>352.7</td><td>272.69</td><td>18.49</td><td>93</td></tr><tr><td>Lyon</td><td>Paris</td><td>78</td><td>27156</td><td>348.15</td><td>185.59</td><td>14.44</td><td>80</td></tr><tr><td>Montpellier</td><td>Lille</td><td>78</td><td>27008</td><td>346.26</td><td>318.79</td><td>15.28</td><td>74</td></tr><tr><td>Marseille</td><td>Paris</td><td>77</td><td>26882</td><td>349.12</td><td>285.64</td><td>16.43</td><td>85</td></tr><tr><td>Marseille</td><td>Rennes</td><td>75</td><td>26874</td><td>358.32</td><td>381.29</td><td>23.19</td><td>110</td></tr><tr><td>Marseille</td><td>Bordeaux</td><td>77</td><td>26827</td><td>348.4</td><td>316.6</td><td>15.18</td><td>100</td></tr><tr><td>Bordeaux</td><td>Lyon</td><td>76</td><td>26810</td><td>352.76</td><td>284.45</td><td>13.5</td><td>82</td></tr><tr><td>Rennes</td><td>Bordeaux</td><td>76</td><td>26803</td><td>352.67</td><td>161.47</td><td>12.41</td><td>81</td></tr><tr><td>Lille</td><td>Nantes</td><td>78</td><td>26622</td><td>341.31</td><td>207.5</td><td>12.17</td><td>69</td></tr><tr><td>Paris</td><td>Bordeaux</td><td>79</td><td>26617</td><td>336.92</td><td>239.7</td><td>12.75</td><td>86</td></tr><tr><td>Toulouse</td><td>Lille</td><td>76</td><td>26498</td><td>348.66</td><td>312.04</td><td>12.51</td><td>88</td></tr><tr><td>Marseille</td><td>Lille</td><td>75</td><td>26494</td><td>353.25</td><td>325.63</td><td>22.28</td><td>110</td></tr><tr><td>Nantes</td><td>Paris</td><td>80</td><td>26488</td><td>331.1</td><td>177.26</td><td>13.64</td><td>83</td></tr><tr><td>Nantes</td><td>Lyon</td><td>76</td><td>26484</td><td>348.47</td><td>270.84</td><td>15.08</td><td>90</td></tr><tr><td>Strasbourg</td><td>Nantes</td><td>78</td><td>26439</td><td>338.96</td><td>364.65</td><td>18.64</td><td>78</td></tr><tr><td>Bordeaux</td><td>Strasbourg</td><td>72</td><td>26406</td><td>366.75</td><td>368.88</td><td>13.71</td><td>85</td></tr><tr><td>Paris</td><td>Rennes</td><td>78</td><td>26397</td><td>338.42</td><td>164.74</td><td>14.19</td><td>87</td></tr><tr><td>Lyon</td><td>Bordeaux</td><td>78</td><td>26378</td><td>338.18</td><td>281.21</td><td>15.21</td><td>83</td></tr><tr><td>Nantes</td><td>Toulouse</td><td>79</td><td>26371</td><td>333.81</td><td>227.42</td><td>12.76</td><td>83</td></tr><tr><td>Toulouse</td><td>Marseille</td><td>75</td><td>26279</td><td>350.39</td><td>236.68</td><td>14.96</td><td>73</td></tr><tr><td>Rennes</td><td>Lyon</td><td>77</td><td>26245</td><td>340.84</td><td>321.78</td><td>11.71</td><td>85</td></tr><tr><td>Lille</td><td>Marseille</td><td>74</td><td>26174</td><td>353.7</td><td>332.05</td><td>13.08</td><td>79</td></tr><tr><td>Lille</td><td>Toulouse</td><td>77</td><td>26109</td><td>339.08</td><td>320.7</td><td>12.96</td><td>90</td></tr><tr><td>Rennes</td><td>Lille</td><td>77</td><td>26034</td><td>338.1</td><td>177.87</td><td>12.87</td><td>87</td></tr><tr><td>Strasbourg</td><td>Toulouse</td><td>78</td><td>25949</td><td>332.68</td><td>391.5</td><td>15.96</td><td>89</td></tr><tr><td>Lille</td><td>Bordeaux</td><td>73</td><td>25946</td><td>355.42</td><td>258.07</td><td>13.51</td><td>85</td></tr><tr><td>Montpellier</td><td>Toulouse</td><td>77</td><td>25866</td><td>335.92</td><td>166.88</td><td>11.56</td><td>81</td></tr><tr><td>Paris</td><td>Toulouse</td><td>77</td><td>25855</td><td>335.78</td><td>249.83</td><td>17.88</td><td>89</td></tr><tr><td>Strasbourg</td><td>Montpellier</td><td>77</td><td>25762</td><td>334.57</td><td>293.25</td><td>16.18</td><td>91</td></tr><tr><td>Nantes</td><td>Montpellier</td><td>76</td><td>25629</td><td>337.22</td><td>320.71</td><td>14.3</td><td>77</td></tr><tr><td>Montpellier</td><td>Paris</td><td>76</td><td>25567</td><td>336.41</td><td>259.17</td><td>13.54</td><td>89</td></tr><tr><td>Lyon</td><td>Lille</td><td>75</td><td>25524</td><td>340.32</td><td>227.43</td><td>13.57</td><td>85</td></tr><tr><td>Lyon</td><td>Montpellier</td><td>79</td><td>25452</td><td>322.18</td><td>167.56</td><td>17.66</td><td>90</td></tr><tr><td>Rennes</td><td>Paris</td><td>71</td><td>25182</td><td>354.68</td><td>164.07</td><td>14.93</td><td>89</td></tr><tr><td>Toulouse</td><td>Rennes</td><td>75</td><td>25167</td><td>335.56</td><td>284.11</td><td>13.19</td><td>74</td></tr><tr><td>Strasbourg</td><td>Lyon</td><td>75</td><td>24871</td><td>331.61</td><td>198.68</td><td>17.11</td><td>86</td></tr><tr><td>Marseille</td><td>Nantes</td><td>75</td><td>24817</td><td>330.89</td><td>355.39</td><td>17.09</td><td>107</td></tr><tr><td>Montpellier</td><td>Lyon</td><td>79</td><td>24768</td><td>313.52</td><td>166.32</td><td>12.19</td><td>77</td></tr><tr><td>Rennes</td><td>Marseille</td><td>76</td><td>24613</td><td>323.86</td><td>392.63</td><td>13.68</td><td>78</td></tr><tr><td>Montpellier</td><td>Bordeaux</td><td>74</td><td>24608</td><td>332.54</td><td>268.57</td><td>13.84</td><td>77</td></tr><tr><td>Nantes</td><td>Bordeaux</td><td>76</td><td>24537</td><td>322.86</td><td>120.49</td><td>12.63</td><td>85</td></tr><tr><td>Rennes</td><td>Strasbourg</td><td>77</td><td>24252</td><td>314.96</td><td>352.16</td><td>14.36</td><td>90</td></tr><tr><td>Toulouse</td><td>Bordeaux</td><td>79</td><td>24201</td><td>306.34</td><td>167.91</td><td>15.49</td><td>90</td></tr><tr><td>Lyon</td><td>Marseille</td><td>77</td><td>23972</td><td>311.32</td><td>173.62</td><td>14.44</td><td>79</td></tr><tr><td>Bordeaux</td><td>Toulouse</td><td>77</td><td>23509</td><td>305.31</td><td>171.08</td><td>13.08</td><td>76</td></tr><tr><td>Bordeaux</td><td>Nantes</td><td>79</td><td>23386</td><td>296.03</td><td>136.22</td><td>14.03</td><td>87</td></tr><tr><td>Paris</td><td>Nantes</td><td>72</td><td>22948</td><td>318.72</td><td>179.58</td><td>15.32</td><td>82</td></tr><tr><td>Marseille</td><td>Lyon</td><td>77</td><td>21726</td><td>282.16</td><td>170.25</td><td>15.09</td><td>80</td></tr><tr><td>Lille</td><td>Paris</td><td>77</td><td>21152</td><td>274.7</td><td>112.0</td><td>14.19</td><td>66</td></tr><tr><td>Marseille</td><td>Montpellier</td><td>78</td><td>20871</td><td>267.58</td><td>114.27</td><td>20.04</td><td>90</td></tr><tr><td>Paris</td><td>Lille</td><td>79</td><td>20462</td><td>259.01</td><td>118.96</td><td>13.97</td><td>86</td></tr><tr><td>Nantes</td><td>Rennes</td><td>78</td><td>20101</td><td>257.71</td><td>113.64</td><td>13.92</td><td>79</td></tr><tr><td>Montpellier</td><td>Marseille</td><td>77</td><td>17016</td><td>220.99</td><td>125.88</td><td>12.05</td><td>83</td></tr><tr><td>Rennes</td><td>Nantes</td><td>77</td><td>15421</td><td>200.27</td><td>132.23</td><td>14.78</td><td>81</td></tr></tbody></table></section><section><h2>Exercice 21</h2><details><summary>Voir le code</summary><pre><code># Exercice 21 - Analyse finale
+print(&quot;&quot;&quot;
+    Conclusion :
+    L&#x27;analyse porte sur 7200 trajets (dont 6943 non annulés) depuis 10 gares de départ en France.
+    Le retard moyen est de 14.84 minutes.
+    Strasbourg est la première gare transportant le plus de passagers avec 246 226 passagers.
+    Lyon est deuxième avec 2444 684 passagers et présente le plus de trajets (702 trajets).
+    La ligne Lyon -&gt; Strasbourg est la plus fréquentée, avec 30 115 passagers.
+    Elle devance la ligne Lille -&gt; Strasbourg (29 690 passagers) et la ligne Strasbourg -&gt; Paris (29 676 passagers).
+    Marseille présente de loin le taux de trajets avec retard supérieur à 15 minutes le plus élevé (42.17%), suivi de Strasbourg (40.60%). Marseille et Strasbourg occupent le haut du Top10 des lignes ayant le retard moyen le plus élevé (avec des retards maximums supérieurs à 90 minutes). Ces 2 gares méritent une attention particulière.
+    Le retard moyen le plus élevé par ligne concerne Marseille -&gt; Rennes (23.19 minutes sur 75 trajets) suivi de Marseille -&gt; Lille (22.28 minutes sur 75 trajets).
+    Les lignes les plus fréquentées ne sont pas nécessairement les plus en retard : ainsi, Lyon -&gt; Strasbourg compte 30 115 passagers mais présente un retard moyen de 12.17 minutes sur 78 trajets.
+    La société devrait examiner en priorité la ponctualité au départ de Marseille et Strasbourg, puis rechercher les causes de retard sur les lignes Marseille -&gt; Rennes et Marseille -&gt; Lille.
+&quot;&quot;&quot;)
+</code></pre></details><pre>
+    Conclusion :
+    L&#x27;analyse porte sur 7200 trajets (dont 6943 non annulés) depuis 10 gares de départ en France.
+    Le retard moyen est de 14.84 minutes.
+    Strasbourg est la première gare transportant le plus de passagers avec 246 226 passagers.
+    Lyon est deuxième avec 2444 684 passagers et présente le plus de trajets (702 trajets).
+    La ligne Lyon -&gt; Strasbourg est la plus fréquentée, avec 30 115 passagers.
+    Elle devance la ligne Lille -&gt; Strasbourg (29 690 passagers) et la ligne Strasbourg -&gt; Paris (29 676 passagers).
+    Marseille présente de loin le taux de trajets avec retard supérieur à 15 minutes le plus élevé (42.17%), suivi de Strasbourg (40.60%). Marseille et Strasbourg occupent le haut du Top10 des lignes ayant le retard moyen le plus élevé (avec des retards maximums supérieurs à 90 minutes). Ces 2 gares méritent une attention particulière.
+    Le retard moyen le plus élevé par ligne concerne Marseille -&gt; Rennes (23.19 minutes sur 75 trajets) suivi de Marseille -&gt; Lille (22.28 minutes sur 75 trajets).
+    Les lignes les plus fréquentées ne sont pas nécessairement les plus en retard : ainsi, Lyon -&gt; Strasbourg compte 30 115 passagers mais présente un retard moyen de 12.17 minutes sur 78 trajets.
+    La société devrait examiner en priorité la ponctualité au départ de Marseille et Strasbourg, puis rechercher les causes de retard sur les lignes Marseille -&gt; Rennes et Marseille -&gt; Lille.
+
+</pre></section></body></html>
